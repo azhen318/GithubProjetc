@@ -1,0 +1,96 @@
+<html>
+	<head>
+		<meta charset="utf-8"></meta>
+		<title>百度地图Demo</title>
+		<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+		<script  type="text/javaScript" src="http://api.map.baidu.com/api?key=&v=2.0&services=true&ak=Puzsuhx0wmeNTQFoHgfDEf9U"></script>
+		<script type="text/javascript" src="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.js"></script>
+	
+	</head>
+	<body>
+		<p1>你好，朋友</p1>
+		<div>
+			      要查询的地址：<input id="text_" type="text" value="宁波天一广场" style="margin-right:100px;"/>
+                  查询结果(经纬度)：<input id="result_" type="text" />
+				  <input id="log" type="text"  style="margin-right:100px;"/>
+                  <input type="button" value="查询" onclick="searchByStationName();"/>
+		</div>
+		<div id="Map" style="position: absolute;
+        margin-top:30px; 
+        width: 730px; 
+        height: 590px; 
+        top: 50; 
+        border: 1px solid gray;
+        overflow:hidden;"></div>
+		
+		
+	</body>
+
+		<script>
+			
+				var map= new BMap.Map("Map");
+				map.centerAndZoom("北京", 5);
+				map.enableScrollWheelZoom();    //启用滚轮放大缩小，默认禁用
+				map.enableContinuousZoom();    //启用地图惯性拖拽，默认禁用
+				map.addControl(new BMap.NavigationControl());  //添加默认缩放平移控件
+				map.addControl(new BMap.OverviewMapControl()); //添加默认缩略地图控件
+				map.addControl(new BMap.OverviewMapControl({ isOpen: true, anchor: BMAP_ANCHOR_BOTTOM_RIGHT })); 
+				map.addControl(new BMap.ScaleControl());
+				map.addControl(new BMap.CopyrightControl());
+				var localSearch = new BMap.LocalSearch(map);
+				localSearch.enableAutoViewport();
+			
+			
+			   var polyline = new BMap.Polygon([
+                 new BMap.Point(116.413384,39.910925),new BMap.Point(91.120824,29.65004),new BMap.Point(113.271431,23.135336)
+			   ], {strokeColor:"red",//设置颜色 
+                strokeWeight:3, //宽度
+               strokeOpacity:0.5});//透明度
+		       map.addOverlay(polyline);	
+			   
+			  
+			   var transit = new BMap.TransitRoute("北京市");   
+				transit.setSearchCompleteCallback(function(results){   
+				if (transit.getStatus() == BMAP_STATUS_SUCCESS){   
+					var firstPlan = results.getPlan(0);   
+					// 绘制步行线路   
+					for (var i = 0; i < firstPlan.getNumRoutes(); i ++){   
+						var walk = firstPlan.getRoute(i);   
+						if (walk.getDistance(false) > 0){   
+						// 步行线路有可能为0   
+							map.addOverlay(new BMap.Polyline(walk.getPoints(), {lineColor: "green"}));   
+						}   
+					}   
+				// 绘制公交线路   
+				for (i = 0; i < firstPlan.getNumLines(); i ++){   
+						var line = firstPlan.getLine(i);   
+						map.addOverlay(new BMap.Polyline(line.getPoints()));   
+				}   
+				// 输出方案信息   
+				var s = [];   
+				for (i = 0; i < results.getNumPlans(); i ++){   
+					s.push((i + 1) + ". " + results.getPlan(i).getDescription());   
+				}   
+				document.getElementById("log").innerHTML = s.join("<BR>");   
+			}   
+		})  			  
+			transit.search("王府井", "西单");   
+			
+			function searchByStationName() {
+　　			var keyword = document.getElementById("text_").value;
+　　			localSearch.setSearchCompleteCallback(function (searchResult) {
+　　　　				var poi = searchResult.getPoi(0);
+　　　　				document.getElementById("result_").value = poi.point.lng + "," + poi.point.lat; //获取经度和纬度，将结果显示在文本框中
+　　　　				map.centerAndZoom(poi.point, 13);
+						var marker = new BMap.Marker(new BMap.Point(poi.point.lng, poi.point.lat));  // 创建标注，为要查询的地址对应的经纬度
+						marker.addEventListener("click",function(){
+							alert("你点击了该点")
+						})
+						
+						map.addOverlay(marker);
+　　			});
+　　			localSearch.search(keyword);
+		  }
+			
+		</script>	
+</html>
